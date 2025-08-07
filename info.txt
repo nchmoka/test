@@ -1,0 +1,16 @@
+add to UsernameAuthFilter:    
+
+@Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Skip when there is NO header → anonymous request
+        return request.getHeader("X-Username") == null;
+    }
+
+add to securityconfig top:
+@EnableMethodSecurity(securedEnabled = true)
+
+add to protected routes:
+    @Secured("ROLE_ADMIN")
+    @Secured({"ROLE_ADMIN","ROLE_MANAGER"})
+
+
