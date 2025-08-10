@@ -1,16 +1,49 @@
-add to UsernameAuthFilter:    
+# application.yml
+security:
+  roles:
+    admin: ROLE_ADMIN
+    manager: ROLE_MANAGER
 
-@Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Skip when there is NO header → anonymous request
-        return request.getHeader("X-Username") == null;
-    }
 
-add to securityconfig top:
-@EnableMethodSecurity(securedEnabled = true)
+// src/main/java/.../security/RolesProperties.java
+package com.example.securitydemo.security;
 
-add to protected routes:
-    @Secured("ROLE_ADMIN")
-    @Secured({"ROLE_ADMIN","ROLE_MANAGER"})
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
+@Component("roles")                           // SpEL bean name: @roles
+@ConfigurationProperties(prefix = "security.roles")
+public class RolesProperties {
+    /** e.g. ROLE_ADMIN */
+    private String admin;
+    /** e.g. ROLE_MANAGER */
+    private String manager;
+
+    // getters + setters
+    public String getAdmin() { return admin; }
+    public void setAdmin(String admin) { this.admin = admin; }
+    public String getManager() { return manager; }
+    public void setManager(String manager) { this.manager = manager; }
+}
+
+@RestController
+@RequestMapping("/api/manage")
+public class ManageController {
+
+    @PreAuthorize("hasAnyAuthority(@roles.manager, @roles.admin)")
+    @PutMapping("/item/{id}")
+    public ItemDto update(@PathVariable long id, @RequestBody ItemDto dto) { … }
+}
+@RestController
+@RequestMapping("/api/tasks")
+public class TaskController {
+
+    @PreAuthorize("hasAuthority(@roles.admin)")
+    @PostMapping("/approve/{id}")
+    public TaskDto approve(@PathVariable long id) { … }
+
+    @PreAuthorize("hasAuthority(@roles.admin)")
+    @PutMapping("/reject/{id}")
+    public TaskDto reject(@PathVariable long id) { … }
+}
 
